@@ -38,6 +38,8 @@ void setwide(void);  void setnoaddr(void);  void squeeze(int);  void substitute(
 jmp_buf  savej;
 char grepbuf[GBSIZE];
 void greperror(char);  void grepline(void);
+void ungetch_(int c);
+void search(const char* re);
 
 typedef void  (*SIG_TYP)(int);
 SIG_TYP  oldhup, oldquit;  //const int SIGHUP = 1;  /* hangup */   const int SIGQUIT = 3;  /* quit (ASCII FS) */
