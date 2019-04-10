@@ -1,26 +1,44 @@
 
 #include "edgrep.h"
 
-int main(int argc, char *argv[]) {  char *p1, *p2;  SIG_TYP oldintr;  oldquit = signal(SIGQUIT, SIG_IGN);
-  oldhup = signal(SIGHUP, SIG_IGN);  oldintr = signal(SIGINT, SIG_IGN);
-  if (signal(SIGTERM, SIG_IGN) == SIG_DFL) { signal(SIGTERM, quit); }  argv++;
-  while (argc > 1 && **argv=='-') {
-    switch((*argv)[1]) {
-    case '\0': vflag = 0;  break;
-    case 'q': signal(SIGQUIT, SIG_DFL);  vflag = 1;  break;
-    case 'o': oflag = 1;  break;
-    }
-    argv++;  argc--;
+int main(int argc, char *argv[]) {   if (argc != 3) { 
+    fprintf(stderr, "Usage: ./grep searchre file(s)\n"); 
+    exit(1); 
   }
-  if (oflag) {  p1 = "/dev/stdout";  p2 = savedfile;  while ((*p2++ = *p1++) == 1) { } }
-  if (argc > 1) {  p1 = *argv;  p2 = savedfile;
-    while ((*p2++ = *p1++) == 1) {  if (p2 >= &savedfile[sizeof(savedfile)]) { p2--; }  }  globp = "r";
-  }
-  zero = (unsigned *)malloc(nlall * sizeof(unsigned));  tfname = mktemp(tmpXXXXX);  init();
-  if (oldintr!=SIG_IGN) { signal(SIGINT, onintr); }  if (oldhup!=SIG_IGN) { signal(SIGHUP, onhup); }
-  setjmp(savej);
-  commands();
-  quit(0);  return 0;
+  zero = (unsigned *)malloc(nlall * sizeof(unsigned));  
+  tfname = mktemp(tmpXXXXX);  
+  init();
+
+  readfile(argv[2]);
+  search(argv[1]);
+  printf("\nquitting...\n");  exit(1);
+}
+#define BUFSIZE 100
+char buf[BUFSIZE];  
+int bufp = 0;
+int getch_(void) {  
+  char c = (bufp > 0) ? buf[--bufp] : getchar();  
+  lastc = c & 0177;
+//  if (lastc == '\n') {  // uncomment if you want to see the chars
+//    printf("getch(): newline\n"); 
+//  } else { 
+     printf("getch_(): %c\n", lastc); 
+// }
+  return lastc;
+}
+
+void ungetch_(int c) { 
+  if (bufp >= BUFSIZE) {  
+    printf("ungetch: overflow\n"); 
+  }  else {  
+    buf[bufp++] = c; 
+  } 
+}
+void search(const char* re) {  
+  char buf[GBSIZE];  
+  snprintf(buf, sizeof(buf), "/%s\n", re);  // / and \n very important 
+  printf("g%s", buf);  const char* p = buf + strlen(buf) - 1;
+  while (p >= buf) { ungetch_(*p--); }  global(1);
 }
 void commands(void) {  unsigned int *a1;  int c, temp;  char lastsep;
   for (;;) {
